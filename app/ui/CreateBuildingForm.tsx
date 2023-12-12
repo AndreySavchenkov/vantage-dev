@@ -10,8 +10,6 @@ export default function CreateBuildingForm() {
   const initialState = { message: null, errors: {} };
   const [state, dispatch] = useFormState(createBuilding, initialState);
 
-  console.log(`state-> ${state?.errors?.address}`);
-
   return (
     <form action={dispatch} className="w-[22rem] flex flex-col gap-5 mt-8">
       <div>

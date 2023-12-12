@@ -3,12 +3,11 @@
 import { z } from "zod";
 import { sql } from "@vercel/postgres";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 export type State = {
   errors?: {
-    city?: string[];
-    address?: string[];
+    city?: string[] | undefined;
+    address?: string[] | undefined;
   };
   message?: string | null;
 };
@@ -31,7 +30,10 @@ const FormSchema = z.object({
 
 const CreateBuilding = FormSchema.omit({ id: true });
 
-export async function createBuilding(prevState: State, formData: FormData) {
+export async function createBuilding(
+  prevState: State,
+  formData: FormData
+): Promise<State> {
   // Validate form using Zod
   const validatedFields = CreateBuilding.safeParse({
     city: formData.get("city"),
@@ -49,21 +51,26 @@ export async function createBuilding(prevState: State, formData: FormData) {
   // Prepare data for insertion into the database
   const { address, city } = validatedFields.data;
 
-  console.log(validatedFields.data);
-
   // Insert data into the database
   try {
     await sql`
-  INSERT INTO buildings (address, city)
-  VALUES (${address}, ${city})
-`;
+      INSERT INTO buildings (address, city)
+      VALUES (${address}, ${city})
+    `;
+
+    revalidatePath("/");
+
+    return {
+      errors: {
+        city: undefined, // Update with actual values
+        address: undefined, // Update with actual values
+      },
+      message: undefined, // Update with actual message
+    };
   } catch (err) {
     // If a database error occurs, return a more specific error.
     return {
       message: "Database Error: Failed to Create Invoice.",
     };
   }
-
-  // Revalidate the cache for the invoices page and redirect the user.
-  revalidatePath("/");
 }
